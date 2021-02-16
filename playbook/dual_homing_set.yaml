@@ -1,0 +1,43 @@
+---
+name: "setting up dual Homming on the servers"
+hosts: all
+gather_facts: false
+tasks:
+    - name: "backing up existing files"
+      shell: 
+          cmd: cp ${ item } ${item }.bkp
+      with_items:
+         - "/etc/sysconfig/network-scripts/ifcfg-p1p1"
+         - "/etc/sysconfig/network-scripts/ifcfg-p2p1"
+         - "/etc/sysconfig/network-scripts/ifcfg-em3"
+
+    - name: copying the p1p1 config files to the servers
+      copy:
+          src: "ifcfg-p1p1"
+          dest: "/etc/sysconfig/network-scripts/ifcfg-p1p1"
+          mode: 0750
+          owner: root
+    - name: copying the p1p1 config files to the servers
+      copy:
+          src: "ifcfg-p1p1"
+          dest: "/etc/sysconfig/network-scripts/ifcfg-p2p1"
+          mode: 0750
+          owner: root
+    - name: copying the bond config files to the servers
+      template:
+          src: "ifcfg-bond0"
+          dest: "/etc/sysconfig/network-scripts/ifcfg-bond0"
+          mode: 0750
+          owner: root
+    - name: copying the p1p1 config files to the servers
+      copy:
+          src: "ifcfg-em3"
+          dest: "/etc/sysconfig/network-scripts/ifcfg-em3"
+          mode: 0750
+          owner: root
+    - name: restarting the network config 
+      service:
+            name: network
+            state: restarted
+    
+  
