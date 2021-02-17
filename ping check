@@ -1,0 +1,21 @@
+#! /bin/bash
+
+
+inventory=$1
+email=$2
+
+        for host in `cat $inventory |awk '{print $1}'`
+        do
+                response=""
+                response=`ping -c 10 $host |grep -i "packet loss"|awk '{print "<td>"$1"</td><td>"$4"</td><td>"$6"</td></tr>"}'`
+                echo "<tr><td>$host</td>$response" >> /tmp/pingcheck.info
+
+        done
+        echo '<html><body><table border=1px style="border-collapse: collapse; text-align: center "' >> pingcheck.msg
+        echo "<tr><th style="background-color:#cc7a00">Server Name</th><th style="background-color:#cc7a00">Packets Transmitted</th><th style="background-color:#cc7a00"> Response Recived</th><th style="background-color:#cc7a00"> % Packet Loss </th></tr>" >> pingcheck.msg
+        cat /tmp/pingcheck.info >>  pingcheck.msg
+        echo "</table></body></html>"  >> pingcheck.msg
+
+        cat pingcheck.msg | mail -S 'MIME-Version=1.0' -S 'Content-Type=text/html; charset=iso-8859-1' -s 'Server Ping Report' $email -v
+      rm -rf /tmp/pingcheck.info
+      rm  -rf pingcheck.msg
