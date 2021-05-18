@@ -1,0 +1,35 @@
+---
+- name: precheck to migrate the vm
+  hosts: all
+  vars:
+      - "vm_ip": ""
+  gather_facts: no
+  serial: 1
+  tasks:
+    - name: ping the virtual machine 
+      local_action: ansible.builtin.command ping -c 1 {{ inventory_hostname }}
+      register: ping_result                                                                         
+  
+    - name: get vcpu for domain
+      shell:
+         cmd: "virsh vcpucount {{vm_name}} |head -1|awk '{print $3}'"
+      delegate_to: "{{src_hyp}}"
+      register: vcpucount    
+
+    - name: get meminfo for domain
+      shell:
+         cmd: "virsh dommemstat {{vm_name}} | grep -i available |awk '{print $2}' "
+      delegate_to: "{{src_hyp}}"
+      register: vmemcount
+
+    - name : get available cpu in the destination server
+      shell: "virsh list | awk '{print $1}' | grep -oIE '[0-9]*' | while read word; do virsh dominfo ${word} | grep 'CPU.s'; done | awk 'BEGIN {a=0;} {a=a+$2;} END {print a;}'"
+      delegate_to: "{{dst_hyp}}"
+      register: cpucount
+
+
+    - set_fact:
+          cpuavailable: "{{80 - (cpucount.stdout | int)}}"
+ 
+    - debug:
+          var: cpuavailable
